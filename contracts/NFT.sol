@@ -12,6 +12,7 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public cost = 0;
     uint256 public maxSupply;
     uint256 public allowMintingOn; 
+    bool private paused = false;
 
 
     event Mint(uint256 amount, address minter);
@@ -31,7 +32,12 @@ contract NFT is ERC721Enumerable, Ownable {
         baseURI = _baseURI;
     }
 
-    function mint(uint256 _mintAmount) public payable { //_mintAmount is the number of NFTs to be minted
+    modifier pausible() {
+        require(paused == false, "Minting is currently paused.");
+        _;
+    }
+
+    function mint(uint256 _mintAmount) public payable pausible { //_mintAmount is the number of NFTs to be minted
         // Only allow minting after specified time
         require((block.timestamp >= allowMintingOn));
         // Must mint atleast 1 NFT
@@ -85,4 +91,12 @@ contract NFT is ERC721Enumerable, Ownable {
         cost = _newCost;
     }
 
+    function setPausedState(bool _pauseState) public onlyOwner {
+        require (_pauseState != paused, "No change to paused state.");
+        paused = _pauseState;
+    }
+
+    function getPausedState() public view returns(bool) {
+        return paused;
+    }
 }

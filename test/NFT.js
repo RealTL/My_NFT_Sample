@@ -145,7 +145,6 @@ describe('NFT', () => {
   describe('Displaying NFTs', () => {
     let transaction, result
     const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
-    
 
     beforeEach(async () => {
         const NFT = await ethers.getContractFactory('NFT');
@@ -166,7 +165,7 @@ describe('NFT', () => {
 
   });
 
-  describe('Minting', () => {
+  describe('Owner and Access Checks', () => {
     let transaction, result, balanceBefore, costBefore
 
     describe('Success', async () => {
@@ -188,6 +187,8 @@ describe('NFT', () => {
         transaction = await nft.connect(deployer).setCost(ether(2));
         result = await transaction.wait();
 
+        transaction = await nft.connect(deployer).setPausedState(true);
+        result = await transaction.wait();
       })
 
       it('deducts the contract balance', async () => {
@@ -197,7 +198,7 @@ describe('NFT', () => {
       it('sends funds to the deployer (i.e. contract owner)', async () => {
           //console.log("Balance of owner after withdraw: ", await ethers.provider.getBalance(deployer.address));
           expect(await ethers.provider.getBalance(deployer.address)).to.be.greaterThan(balanceBefore);
-      })      
+      })
       
       it('emits a Withdraw event', async () => {
           expect(transaction).to.emit(nft, 'Withdraw').withArgs(COST, deployer.address);
@@ -208,6 +209,14 @@ describe('NFT', () => {
         expect(await nft.connect(deployer).cost()).to.equal(ether(2));
       })
 
+      it('allows owner to pause and unpause minting', async () => {
+        console.log("\x1b[38;5;117m", "         Pause state: ", await nft.connect(deployer).getPausedState());
+        expect(await nft.connect(deployer).getPausedState()).to.equal(true);
+        await expect(nft.connect(minter).mint(2, { value: COST })).to.be.reverted;
+        transaction = await nft.connect(deployer).setPausedState(false);
+        result = await transaction.wait();
+        console.log("\x1b[38;5;117m", "         Pause state: ", await nft.connect(deployer).getPausedState());
+      })
     })
 
     describe('Failure', async () => {
@@ -216,14 +225,34 @@ describe('NFT', () => {
         const NFT = await ethers.getContractFactory('NFT');
         nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
         nft.connect(minter).mint(1, { value: ether(1) })
-        
         await expect(nft.connect(minter).withdraw()).to.be.reverted;
       });
 
       it('denies non-owner to update NFT cost', async () => {
         await expect(nft.connect(minter).setCost(ether(2))).to.be.reverted;
       })
-    })
 
+      it('denies minting when paused', async () => {
+        transaction = await nft.connect(deployer).setPausedState(true);
+        result = await transaction.wait();
+        await expect(nft.connect(minter).mint(2, { value: COST })).to.be.reverted;
+        console.log("\x1b[38;5;117m", "         Pause state: ", await nft.connect(deployer).getPausedState());
+      })
+
+      it('denies non-owner from pausing minting', async () => {
+        console.log("\x1b[38;5;117m", "         Pause state: ", await nft.connect(deployer).getPausedState());
+        await expect(nft.connect(minter).setPausedState(false)).to.be.reverted;
+      })
+
+      it('allows minting to resume after unpausing', async () => {
+        console.log("\x1b[38;5;117m", "         Minter balance before: ", "\x1b[33m", await nft.balanceOf(minter.address));
+        transaction = await nft.connect(deployer).setPausedState(false);
+        result = await transaction.wait();
+        transaction = await nft.connect(minter).mint(1, { value: COST });
+        result = await transaction.wait();
+        console.log("\x1b[38;5;117m", "         Minter balance after: ", "\x1b[33m", await nft.balanceOf(minter.address));
+        expect(await nft.balanceOf(minter.address)).to.equal(1);
+      });
+    });
   });
-})
+});
