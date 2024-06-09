@@ -166,4 +166,53 @@ describe('NFT', () => {
 
   });
 
+  describe('Minting', () => {
+    let transaction, result, balanceBefore
+
+    describe('Success', async () => {
+      const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
+
+      beforeEach(async () => {
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+        transaction = await nft.connect(minter).mint(1, { value: COST });
+        result = await transaction.wait();
+
+        balanceBefore = await ethers.provider.getBalance(deployer.address);
+
+        transaction = await nft.connect(deployer).withdraw();
+        result = await transaction.wait();
+
+      })
+
+      it('deducts the contract balance', async () => {
+          expect(await ethers.provider.getBalance(nft.address)).to.equal(0);
+      })
+
+      it('sends funds to the deployer (i.e. contract owner)', async () => {
+          //console.log("Balance of owner after withdraw: ", await ethers.provider.getBalance(deployer.address));
+          expect(await ethers.provider.getBalance(deployer.address)).to.be.greaterThan(balanceBefore);
+      })      
+      
+      it('emits a Withdraw event', async () => {
+          expect(transaction).to.emit(nft, 'Withdraw').withArgs(COST, deployer.address);
+      })
+
+    })
+
+    describe('Failure', async () => {
+      it('prevents non-owner from withdrawing', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
+        const NFT = await ethers.getContractFactory('NFT');
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
+        nft.connect(minter).mint(1, { value: ether(1) })
+        
+        await expect(nft.connect(minter).withdraw()).to.be.reverted;
+      });
+
+
+    })
+
+  });
 })
