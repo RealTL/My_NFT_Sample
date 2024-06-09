@@ -84,6 +84,7 @@ describe('NFT', () => {
       // e.g. 'ipfs://QmQ2jnDYecFhrf3asEWjyjZRX1pZSsNWG3qHzmNDvXa9qg/1.json'
       it('returns IPFS URI', async () => {
         expect(await nft.tokenURI(1)).to.equal(`${BASE_URI}1.json`);
+        console.log("\x1b[38;5;117m",`         ${await nft.tokenURI(1)}`);
       })
 
       it('updates the total supply', async () => {
@@ -131,6 +132,15 @@ describe('NFT', () => {
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
   
           await expect(nft.connect(minter).mint(100, { value: COST })).to.be.reverted;
+      });
+
+      it('does not return URI for non-existant NFTs', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
+        const NFT = await ethers.getContractFactory('NFT');
+          nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
+          nft.connect(minter).mint(1, { value: COST });
+
+          await expect(nft.tokenURI('99')).to.be.reverted;
       });
 
     })

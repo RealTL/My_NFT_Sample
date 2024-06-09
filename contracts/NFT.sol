@@ -6,7 +6,7 @@ import "./Ownable.sol";
 
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
-    
+
     string public baseURI;
     string public baseExtension = '.json';
     uint256 public cost;
@@ -60,6 +60,7 @@ contract NFT is ERC721Enumerable, Ownable {
         override 
         returns(string memory)
     { 
+        require(_exists(_tokenId), 'NFT does not exist');
         return (string(abi.encodePacked(baseURI, _tokenId.toString(), baseExtension)));
     }
 
