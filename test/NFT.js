@@ -80,6 +80,11 @@ describe('NFT', () => {
       it ('returns total number of tokens the minter owns', async () => {
         expect(await nft.balanceOf(minter.address)).to.equal(1);
       })
+      
+      // e.g. 'ipfs://QmQ2jnDYecFhrf3asEWjyjZRX1pZSsNWG3qHzmNDvXa9qg/1.json'
+      it('returns IPFS URI', async () => {
+        expect(await nft.tokenURI(1)).to.equal(`${BASE_URI}1.json`);
+      })
 
       it('updates the total supply', async () => {
         expect(await nft.totalSupply()).to.equal(1);
