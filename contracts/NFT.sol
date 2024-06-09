@@ -9,7 +9,7 @@ contract NFT is ERC721Enumerable, Ownable {
 
     string public baseURI;
     string public baseExtension = '.json';
-    uint256 public cost;
+    uint256 public cost = 0;
     uint256 public maxSupply;
     uint256 public allowMintingOn; 
 
@@ -79,6 +79,10 @@ contract NFT is ERC721Enumerable, Ownable {
         (bool success, ) = payable(msg.sender).call{ value: balance }("");
         require(success);
         emit Withdraw(balance, msg.sender);
+    }
+
+    function setCost(uint256 _newCost) public onlyOwner {
+        cost = _newCost;
     }
 
 }

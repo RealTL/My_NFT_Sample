@@ -167,7 +167,7 @@ describe('NFT', () => {
   });
 
   describe('Minting', () => {
-    let transaction, result, balanceBefore
+    let transaction, result, balanceBefore, costBefore
 
     describe('Success', async () => {
       const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
@@ -180,8 +180,12 @@ describe('NFT', () => {
         result = await transaction.wait();
 
         balanceBefore = await ethers.provider.getBalance(deployer.address);
+        costBefore = await nft.connect(deployer).cost();
 
         transaction = await nft.connect(deployer).withdraw();
+        result = await transaction.wait();
+
+        transaction = await nft.connect(deployer).setCost(ether(2));
         result = await transaction.wait();
 
       })
@@ -199,6 +203,11 @@ describe('NFT', () => {
           expect(transaction).to.emit(nft, 'Withdraw').withArgs(COST, deployer.address);
       })
 
+      it('allows owner to update NFT cost', async () => {
+        // console.log("NFT Cost before: ", costBefore , " - NFT Cost changed to: ", await nft.connect(deployer).cost())
+        expect(await nft.connect(deployer).cost()).to.equal(ether(2));
+      })
+
     })
 
     describe('Failure', async () => {
@@ -211,7 +220,9 @@ describe('NFT', () => {
         await expect(nft.connect(minter).withdraw()).to.be.reverted;
       });
 
-
+      it('denies non-owner to update NFT cost', async () => {
+        await expect(nft.connect(minter).setCost(ether(2))).to.be.reverted;
+      })
     })
 
   });
