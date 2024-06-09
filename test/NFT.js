@@ -73,6 +73,14 @@ describe('NFT', () => {
         result = await transaction.wait();
       })
 
+      it ('returns the address of minter', async () => {
+        expect(await nft.ownerOf(1)).to.equal(minter.address);
+      })
+
+      it ('returns total number of tokens the minter owns', async () => {
+        expect(await nft.balanceOf(minter.address)).to.equal(1);
+      })
+
       it('updates the total supply', async () => {
         expect(await nft.totalSupply()).to.equal(1);
       })
