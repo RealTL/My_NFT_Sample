@@ -106,7 +106,6 @@ describe('NFT', () => {
         const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
         const NFT = await ethers.getContractFactory('NFT');
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
-  
           await expect(nft.connect(minter).mint(1, { value: ether(1) })).to.be.reverted;
       });
 
@@ -114,7 +113,6 @@ describe('NFT', () => {
         const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
         const NFT = await ethers.getContractFactory('NFT');
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
-  
           await expect(nft.connect(minter).mint(0, { value: COST })).to.be.reverted;
       });
 
@@ -122,7 +120,6 @@ describe('NFT', () => {
         const ALLOW_MINTING_ON = new Date('May 26, 2030 18:00:00').getTime().toString().slice(0,10);
         const NFT = await ethers.getContractFactory('NFT');
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
-  
           await expect(nft.connect(minter).mint(1, { value: COST })).to.be.reverted;
       });
 
@@ -130,7 +127,6 @@ describe('NFT', () => {
         const ALLOW_MINTING_ON = Date.now().toString().slice(0,10);
         const NFT = await ethers.getContractFactory('NFT');
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
-  
           await expect(nft.connect(minter).mint(100, { value: COST })).to.be.reverted;
       });
 
@@ -139,11 +135,34 @@ describe('NFT', () => {
         const NFT = await ethers.getContractFactory('NFT');
           nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
           nft.connect(minter).mint(1, { value: COST });
-
           await expect(nft.tokenURI('99')).to.be.reverted;
       });
 
     })
+
+  });
+
+  describe('Displaying NFTs', () => {
+    let transaction, result
+    const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
+    
+
+    beforeEach(async () => {
+        const NFT = await ethers.getContractFactory('NFT');
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        // Mint 3 NFTs  
+        transaction = await nft.connect(minter).mint(3, { value: ether(30) });
+        result = await transaction.wait();
+    });
+
+    it('returns all NFTs for a given owner (i.e. 3 for this test)', async () => {
+        let tokenIDs = await nft.walletOfOwner(minter.address);
+        // console.log("Owner wallet", tokenIDs);
+        expect(tokenIDs.length).to.equal(3);
+        expect(tokenIDs[0].toString()).to.equal('1');
+        expect(tokenIDs[1].toString()).to.equal('2');
+        expect(tokenIDs[2].toString()).to.equal('3');
+    });
 
   });
 
