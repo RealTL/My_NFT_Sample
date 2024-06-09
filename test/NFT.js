@@ -86,15 +86,14 @@ describe('NFT', () => {
     describe('Failure', async () => {
       it('rejects insufficient payment amount', async () => {
         const ALLOW_MINTING_ON = Date.now().toString().slice(0,10); // Current time of transaction
-
-        beforeEach(async () => {
-          const NFT = await ethers.getContractFactory('NFT')
-          nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        const NFT = await ethers.getContractFactory('NFT');
+          nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI);
   
           await expect(nft.connect(minter).mint(1, { value: ether(1) })).to.be.reverted;
-          result = await transaction.wait();
-        })
-      })
+      });
+
+
+
     })
 
   });
